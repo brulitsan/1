@@ -1,9 +1,18 @@
-from django.contrib.auth.models import User
+from django.contrib.auth.models import  AbstractUser
 from django.db import models
+from django.db.models.signals import post_save, m2m_changed
+from django.dispatch import receiver
 
+
+class User(AbstractUser):
+    def get_manager(self):
+        try:
+            return self.manager
+        except:
+            return None
 
 class Showroom (models.Model):
-    showroomName = models.CharField('имя', default='', max_length=25)
+    showroomName = models.CharField('название', default='', max_length=25)
     location = models.CharField('местоположение', max_length=35)
     cars = models.ManyToManyField('Car', through='CarInformation')
 
@@ -36,12 +45,15 @@ class CarInformation (models.Model):
     showroom = models.ForeignKey(Showroom, on_delete=models.PROTECT)
     car = models.ForeignKey(Car, on_delete=models.PROTECT)
     price = models.IntegerField(default=0)
-    amount = models.IntegerField(default=0)
+    quantity = models.IntegerField(default=0)
     engine_capacity = models.DecimalField(max_digits=30, decimal_places=2, default=0.0)
     fuelCriteria = models.SmallIntegerField(choices=oil, default=1)
     yearOfRelease = models.IntegerField(default=0)
     wheelLocation = models.CharField(max_length=30, default='')
     color = models.CharField(max_length=100, default='', )
+
+    def __str__(self):
+        return f'{self.car.carModel}'
 
     class Meta:
         verbose_name = 'информация о машинах'
@@ -49,11 +61,12 @@ class CarInformation (models.Model):
 
 
 class Buyer (models.Model):
-    purchases = models.ManyToManyField(Car, related_name='покупки', verbose_name='покупки')
+    products = models.ManyToManyField(CarInformation, related_name='покупки', verbose_name='покупки')
     buyerName = models.CharField(default='', max_length=30)
     price = models.IntegerField(default=0, verbose_name='цена')
     date = models.DateTimeField(default='')
-    user = models.ForeignKey(User, verbose_name='Пользователь', on_delete=models.CASCADE)
+    user = models.OneToOneField(User, verbose_name='Пользователь', on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
 
     def __str__(self):
         return self.buyerName
@@ -62,3 +75,24 @@ class Buyer (models.Model):
         verbose_name = 'покупатель'
         verbose_name_plural = 'покупатель'
 
+
+@receiver(m2m_changed, sender=Buyer.products.through)
+def update_product_quantity(sender, instance, **kwargs):
+    if kwargs.get('action') == 'post_add':
+        # при добавлении новых товаров
+        # уменьшаем количество товара на количество заказанных единиц
+        for product in instance.products.all():
+            product.quantity -= instance.quantity
+            product.save()
+
+class Manager (models.Model):
+    # Clients = models.ForeignKey(Buyer, related_name='клиент', verbose_name='клиент', on_delete=models.PROTECT, null=True)
+    ManegerName = models.CharField(default='', max_length=30)
+    user = models.OneToOneField(User, verbose_name='Менеджер', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.ManegerName
+
+    class Meta:
+        verbose_name = 'Менеджер'
+        verbose_name_plural = 'Менеджер'

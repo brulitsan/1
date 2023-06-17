@@ -21,7 +21,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from avtosalon.views import *
 
 router = routers.SimpleRouter()
-router.register(r'avtosalon', AvtosalonViewSet)
+router.register(r'autosalon', AutosalonViewSet)
 
 
 urlpatterns = [

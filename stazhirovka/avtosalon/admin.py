@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Showroom, Car, CarInformation, Buyer
+from .models import Showroom, Car, CarInformation, Buyer, Manager
 
 
 @admin.register(Showroom)
@@ -14,10 +14,14 @@ class CarsAdmin(admin.ModelAdmin):
 
 @admin.register(CarInformation)
 class CarInformationAdmin(admin.ModelAdmin):
-    list_display = ['car', 'showroom', 'price', 'amount', 'engine_capacity',
+    list_display = ['car', 'showroom', 'price', 'quantity', 'engine_capacity',
                     'fuelCriteria', 'yearOfRelease', 'wheelLocation', 'color']
 
 @admin.register(Buyer)
 class BuyerAdmin(admin.ModelAdmin):
     list_display = ['buyerName', 'price']
-    filter_horizontal = ['purchases']
+    filter_horizontal = ['products']
+
+@admin.register(Manager)
+class ManagerAdmin(admin.ModelAdmin):
+    pass

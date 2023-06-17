@@ -15,3 +15,16 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
             return True
 
         return obj.user == request.user
+
+class ManagerOnly(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.user.is_authenticated and hasattr(request.user, "manager"):
+            return True
+        return False
+
+
+class BuyerOnly(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.user.is_authenticated and hasattr(request.user, "buyer"):
+            return True
+        return False
